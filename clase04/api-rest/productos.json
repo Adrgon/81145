@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "nombre": "Pelota de basket",
+    "precio": 200000
+  },
+  {
+    "id": 3,
+    "nombre": "Medias futbol",
+    "precio": 10000
+  },
+  {
+    "id": 4,
+    "nombre": "Camiseta Seleccion Uruguay",
+    "precio": 200000
+  }
+]
