@@ -1,0 +1,123 @@
+<main class="shell visor">
+  <header class="visor-header">
+    <h1>Tira la cuerda</h1>
+    <p id="statusLine" class="status-line">Esperando inicio…</p>
+  </header>
+
+  <div class="rope-wrap" aria-live="polite">
+    <div class="rope-track">
+      <div class="rope-end rope-end--rojo">Rojo</div>
+      <div class="rope-mid">
+        <div id="marker" class="rope-marker"></div>
+      </div>
+      <div class="rope-end rope-end--azul">Azul</div>
+    </div>
+    <div class="score-readout">
+      <span id="lecturaVentaja" class="lectura-ventaja">Empate</span>
+      <span class="meta-hint">Gana quien llega a <span id="metaNum">200</span> pts de ventaja</span>
+    </div>
+  </div>
+
+  <div id="winnerBanner" class="winner-banner hidden" role="status"></div>
+
+  <div class="visor-actions">
+    <button type="button" id="btnStart" class="btn btn-primary">Iniciar partida</button>
+    <button type="button" id="btnReset" class="btn btn-ghost" disabled>Reiniciar</button>
+  </div>
+</main>
+
+<script>
+(function () {
+  const socket = io();
+  const statusLine = document.getElementById('statusLine');
+  const lecturaVentaja = document.getElementById('lecturaVentaja');
+  const metaNum = document.getElementById('metaNum');
+  const marker = document.getElementById('marker');
+  const winnerBanner = document.getElementById('winnerBanner');
+  const btnStart = document.getElementById('btnStart');
+  const btnReset = document.getElementById('btnReset');
+
+  function ventajaDesdeEstado(s) {
+    if (s && s.ventaja && typeof s.ventaja.lado === 'string') {
+      var pts = Number(s.ventaja.puntos);
+      return {
+        lado: s.ventaja.lado,
+        puntos: Number.isFinite(pts) ? pts : 0,
+      };
+    }
+    var t =
+      typeof s.tension === 'number'
+        ? s.tension
+        : typeof s.posicion === 'number'
+          ? s.posicion
+          : 0;
+    if (t < 0) return { lado: 'rojo', puntos: -t };
+    if (t > 0) return { lado: 'azul', puntos: t };
+    return { lado: 'empate', puntos: 0 };
+  }
+
+  function tensionNormalizada(v, meta) {
+    if (!v || v.lado === 'empate') return 0;
+    var pts = Number(v.puntos) || 0;
+    if (pts === 0) return 0;
+    if (v.lado === 'rojo') return -pts / meta;
+    if (v.lado === 'azul') return pts / meta;
+    return 0;
+  }
+
+  function textoVentaja(v) {
+    if (!v || v.lado === 'empate') return 'Empate';
+    var pts = Number(v.puntos) || 0;
+    if (pts === 0) return 'Empate';
+    var nombre = v.lado === 'rojo' ? 'Rojo' : 'Azul';
+    return 'Ventaja ' + nombre + ': ' + pts;
+  }
+
+  function render(s) {
+    if (!s || typeof s !== 'object') return;
+    var v = ventajaDesdeEstado(s);
+    var meta = Number(s.meta);
+    if (!Number.isFinite(meta) || meta <= 0) meta = 200;
+    if (metaNum) metaNum.textContent = String(meta);
+    if (lecturaVentaja) lecturaVentaja.textContent = textoVentaja(v);
+
+    var r = meta === 0 ? 0 : tensionNormalizada(v, meta);
+    var visualR = Math.sign(r) * Math.sqrt(Math.abs(r));
+    var pct = Math.max(0, Math.min(100, 50 + visualR * 50));
+    if (marker) marker.style.left = pct + '%';
+
+    if (s.estado === 'esperando') {
+      if (statusLine) statusLine.textContent = 'Listo. Pulsá Iniciar para activar los botones de los equipos.';
+      if (btnStart) btnStart.disabled = false;
+      if (btnReset) btnReset.disabled = true;
+      if (winnerBanner) {
+        winnerBanner.classList.add('hidden');
+        winnerBanner.textContent = '';
+      }
+    } else if (s.estado === 'jugando') {
+      if (statusLine) statusLine.textContent = '¡En juego! Los equipos pueden tirar.';
+      if (btnStart) btnStart.disabled = true;
+      if (btnReset) btnReset.disabled = false;
+      if (winnerBanner) winnerBanner.classList.add('hidden');
+    } else {
+      if (statusLine) statusLine.textContent = 'Partida terminada.';
+      if (btnStart) btnStart.disabled = true;
+      if (btnReset) btnReset.disabled = false;
+      if (winnerBanner) {
+        var g = s.ganador === 'rojo' ? 'Rojo' : 'Azul';
+        winnerBanner.textContent = 'Ganó el equipo ' + g + ' 🎉';
+        winnerBanner.classList.remove('hidden');
+      }
+    }
+  }
+
+  socket.on('estado', render);
+
+  btnStart.addEventListener('click', function () {
+    socket.emit('iniciar');
+  });
+  btnReset.addEventListener('click', function () {
+    socket.emit('reiniciar');
+  });
+})();
+</script>

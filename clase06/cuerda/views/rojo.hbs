@@ -1,0 +1,32 @@
+<main class="shell team team-rojo">
+  <h1>Equipo rojo</h1>
+  <p id="hint" class="hint">Esperando que el visor dé inicio…</p>
+  <button type="button" id="pull" class="btn btn-pull" disabled>Tirar</button>
+</main>
+
+<script>
+(function () {
+  const socket = io();
+  const pull = document.getElementById('pull');
+  const hint = document.getElementById('hint');
+
+  function sync(s) {
+    if (s.estado === 'jugando') {
+      pull.disabled = false;
+      hint.textContent = '¡Tocá Tirar para sumar fuerza al rojo!';
+    } else if (s.estado === 'esperando') {
+      pull.disabled = true;
+      hint.textContent = 'Esperando que el visor dé inicio…';
+    } else {
+      pull.disabled = true;
+      hint.textContent = s.ganador === 'rojo' ? '¡Ganaron!' : 'Ganó el azul. Esperá reinicio desde el visor.';
+    }
+  }
+
+  socket.on('estado', sync);
+
+  pull.addEventListener('click', function () {
+    socket.emit('tirar', { equipo: 'rojo' });
+  });
+})();
+</script>
