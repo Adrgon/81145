@@ -1,0 +1,14 @@
+<h1>Listado de productos</h1>
+
+<a href="/productos/create">Nuevo</a>
+
+<ul>
+    {{#each productos }}
+    <li> {{nombre}} - {{precio}} - {{stock}}</li>
+    <a href="/productos/edit/{{_id}}">Editar</a>
+    <form action="/productos/{{id}}?_method=DELETE" method="POST">
+        <button>Eliminar</button>
+    </form>
+
+    {{/each}}
+</ul>

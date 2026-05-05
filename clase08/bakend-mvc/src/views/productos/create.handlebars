@@ -1,0 +1,13 @@
+<h1>Nuevo Producto</h1>
+
+<form action="/productos" method="POST">
+    
+    <input name="nombre" type="text" value="{{data.nombre}}" placeholder="Nombre" />
+
+    <input name="precio" type="number"  value="{{data.precio}}" placeholder="Precio" /> 
+    
+    
+    <input name="stock" type="number" value="{{data.stock}}" placeholder="Stock" /> 
+
+    <button> Guardar </button>
+</form>
