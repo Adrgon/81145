@@ -5,8 +5,10 @@
 <ul>
     {{#each productos }}
     <li> {{nombre}} - {{precio}} - {{stock}}</li>
+
     <a href="/productos/edit/{{_id}}">Editar</a>
-    <form action="/productos/{{id}}?_method=DELETE" method="POST">
+
+    <form action="/productos/{{_id}}?_method=DELETE" method="POST">
         <button>Eliminar</button>
     </form>
 
